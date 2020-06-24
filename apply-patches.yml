@@ -1,0 +1,47 @@
+# set ts=2 sw=2 et ai
+- import_playbook: pre-check.yml
+
+- name: Apply patched files
+  hosts: compute_hosts
+  user: root
+  tasks:
+    - name: get timestamp from shell (avoids fact gathering)
+      command: date +%F-%s
+      register: date
+      delegate_to: localhost
+
+    - name: generate backup directory from timestamp
+      set_fact:
+        backup_path: "{{ backup_root }}/{{ date.stdout }}"
+
+    - name: ensure backup directories exist
+      file:
+        state: directory
+        path: "{{ backup_path }}/{{ item.name | dirname }}"
+      with_items:
+        - "{{ patched_files }}"
+
+    - name: ensure latest symlink
+      file:
+        state: link
+        dest: "{{ backup_root }}/latest"
+        src: "{{ backup_path }}"
+
+    - name: copy original files to safe location
+      copy:
+        remote_src: yes
+        src: "{{ neutron_venv_path }}/{{ site_pkg_subpath }}/{{ item.name }}"
+        dest: "{{ backup_path }}/{{ item.name }}"
+      with_items: "{{ patched_files }}"
+
+    - name: copy patched files into place
+      copy:
+        src: "files/{{ item.name }}"
+        dest: "{{ neutron_venv_path }}/{{ site_pkg_subpath }}/{{ item.name }}"
+        mode: 0644
+      with_items: "{{ patched_files }}"
+
+    - name: restart neutron linux bridge agent
+      service:
+        name: neutron-linuxbridge-agent
+        state: restarted

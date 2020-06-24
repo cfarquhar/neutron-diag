@@ -1,0 +1,16 @@
+# set ts=2 sw=2 et ai
+- name: Restore original files
+  hosts: compute_hosts
+  user: root
+  tasks:
+    - name: copy latest original files back to venv
+      copy:
+        remote_src: yes
+        src: "{{ backup_root }}/latest/{{ item.name }}"
+        dest: "{{ neutron_venv_path }}/{{ site_pkg_subpath }}/{{ item.name }}"
+      with_items: "{{ patched_files }}"
+
+    - name: restart neutron linux bridge agent
+      service:
+        name: neutron-linuxbridge-agent
+        state: restarted

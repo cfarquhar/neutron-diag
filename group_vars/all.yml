@@ -1,0 +1,21 @@
+neutron_venv_path: /openstack/venvs/neutron-18.1.19.dev2/
+# aio1 has a slightly newer OSA tag
+# neutron_venv_path: /openstack/venvs/neutron-18.1.21.dev1/
+site_pkg_subpath: lib/python2.7/site-packages
+backup_root: /root/neutron_diag
+patched_files:
+  - name: neutron/agent/securitygroups_rpc.py
+    orig_sha1sum: 832ab93565888f84f7fbb1a85e584f4ae660a9ac
+    patch_sha1sum: 232f85bf789bbf9cc69e650ba07425a5a4bdeb17
+  - name: neutron/api/rpc/handlers/securitygroups_rpc.py
+    orig_sha1sum: 784f0bc641ed47f48daaa6d9e87d23875c6de02c
+    patch_sha1sum: 4c90e8dd9ba92ae05a7c38b8a4619e0f884ce67b
+  - name: neutron/agent/linux/ipset_manager.py
+    orig_sha1sum: 2e566cbd2b76db54244ffbd162d9fda8b44a87cd
+    patch_sha1sum: 5139058c39c825c8fdc122fd97452d5a2af0eacf
+  - name: neutron/agent/linux/iptables_firewall.py
+    orig_sha1sum: 9e85d15f6f5c2361975e7f494f4d690fb96d4aca
+    patch_sha1sum: 6a21216fa1390e0e687ee80c0ee72972690604ea
+  - name: neutron/plugins/ml2/drivers/agent/_common_agent.py
+    orig_sha1sum: c4397a7aa84a5115d59f45edbba3aea6d5a69c01
+    patch_sha1sum: df0013143ce88dd854c6a471638d19ec8bcb5962

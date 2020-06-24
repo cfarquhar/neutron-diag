@@ -1,0 +1,30 @@
+# set ts=2 sw=2 et ai
+- name: Neutron diagnostics pre-checks
+  hosts: compute_hosts
+  user: root
+  gather_facts: false
+  tasks:
+    - name: stat original files
+      stat:
+        path: "{{ neutron_venv_path }}/{{ site_pkg_subpath }}/{{ item.name }}"
+      with_items: "{{ patched_files }}"
+      register: orig_filestat
+
+    - name: validate checksum on original files
+      assert:
+        that:
+          - item.item.orig_sha1sum == item.stat.checksum
+      with_items: "{{ orig_filestat.results }}"
+
+    - name: stat patched replacement files
+      stat:
+        path: "files/{{ item.name }}"
+      with_items: "{{ patched_files }}"
+      register: patched_filestat
+      delegate_to: localhost
+
+    - name: validate checksum on patched files
+      assert:
+        that:
+          - item.item.patch_sha1sum == item.stat.checksum
+      with_items: "{{ patched_filestat.results }}"
