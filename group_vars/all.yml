@@ -6,7 +6,7 @@ backup_root: /root/neutron_diag
 patched_files:
   - name: neutron/agent/securitygroups_rpc.py
     orig_sha1sum: 832ab93565888f84f7fbb1a85e584f4ae660a9ac
-    patch_sha1sum: 232f85bf789bbf9cc69e650ba07425a5a4bdeb17
+    patch_sha1sum: 69870186a817810574bce6031304b77d7813db9b
   - name: neutron/api/rpc/handlers/securitygroups_rpc.py
     orig_sha1sum: 784f0bc641ed47f48daaa6d9e87d23875c6de02c
     patch_sha1sum: 4c90e8dd9ba92ae05a7c38b8a4619e0f884ce67b
