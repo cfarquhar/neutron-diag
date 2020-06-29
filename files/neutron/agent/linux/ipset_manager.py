@@ -91,14 +91,14 @@ class IpsetManager(object):
     @runtime.synchronized('ipset', external=True)
     def set_members_mutate(self, set_name, ethertype, member_ips):
         LOG.info("cfarquhar: entered set_members_mutate.")
-        LOG.info("cfarquhar: how did we arrive?")
-        import traceback, os
-        stack_layer = 0
-        for stackitem in traceback.extract_stack():
-            _, srcfile = os.path.split(stackitem[0])
-            lineout = "{} ({}): {} -> {}".format(srcfile, stackitem[1], stackitem[2], stackitem[3])
-            LOG.info("cfarquhar: {}: {}".format(stack_layer, lineout))
-            stack_layer += 1
+        # LOG.info("cfarquhar: how did we arrive?")
+        # import traceback, os
+        # stack_layer = 0
+        # for stackitem in traceback.extract_stack():
+        #     _, srcfile = os.path.split(stackitem[0])
+        #     lineout = "{} ({}): {} -> {}".format(srcfile, stackitem[1], stackitem[2], stackitem[3])
+        #     LOG.info("cfarquhar: {}: {}".format(stack_layer, lineout))
+        #     stack_layer += 1
         if not self.set_name_exists(set_name):
             # The initial creation is handled with create/refresh to
             # avoid any downtime for existing sets (i.e. avoiding

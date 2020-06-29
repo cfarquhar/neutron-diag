@@ -163,12 +163,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
     def _update_ipset_members(self, sg_id, sg_members):
         LOG.info("cfarquhar: in _update_ipset_members.  sg_id = {}  sg_members = {}".format(sg_id, sg_members))
         devices = self.devices_with_updated_sg_members.pop(sg_id, None)
-        LOG.info("cfarquhar: printing devices:")
-        if devices:
-            device_idx = 0
-            for device in devices:
-                LOG.info("cfarquhar: device[{}]: {}".format(device_idx, device))
-                device_idx += 1
+        # LOG.info("cfarquhar: printing devices:")
+        # if devices:
+        #     device_idx = 0
+        #     for device in devices:
+        #         LOG.info("cfarquhar: device[{}]: {}".format(device_idx, device))
+        #         device_idx += 1
         # LOG.info("cfarquhar: devices = {}".format(devices))
         for ip_version, current_ips in sg_members.items():
             add_ips, del_ips = self.ipset.set_members(

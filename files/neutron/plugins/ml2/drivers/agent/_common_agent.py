@@ -147,10 +147,15 @@ class CommonAgentLoop(service.Service):
             sys.exit(1)
 
     def setup_rpc(self):
+        # print("cfarquhar: in setup_rpc")
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
         self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
         self.sg_agent = agent_sg_rpc.SecurityGroupAgentRpc(
             self.context, self.sg_plugin_rpc, defer_refresh_firewall=True)
+        # LOG.info("cfarquhar: vars(plugin_rpc): {}".format(vars(self.plugin_rpc)))
+        # LOG.info("cfarquhar: vars(sg_plugin_rpc): {}".format(vars(self.sg_plugin_rpc)))
+        # LOG.info("cfarquhar: vars(sg_agent.plugin_rpc): {}".format(vars(self.sg_agent.plugin_rpc)))
+
 
         self.agent_id = self.mgr.get_agent_id()
         LOG.info("RPC agent_id: %s", self.agent_id)
@@ -461,12 +466,15 @@ class CommonAgentLoop(service.Service):
             if (self._device_info_has_changes(device_info) or
                     self.sg_agent.firewall_refresh_needed()):
                 LOG.debug("Agent loop found changes! %s", device_info)
+                LOG.info("cfarquhar: Agent loop found changes! %s", device_info)
                 try:
                     sync = self.process_network_devices(device_info)
                 except Exception:
                     LOG.exception("Error in agent loop. Devices info: %s",
                                   device_info)
                     sync = True
+            else:
+                LOG.info("cfarquhar: _device_info_has_changes was false")
 
             # sleep till end of polling interval
             elapsed = (time.time() - start)

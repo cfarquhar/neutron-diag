@@ -48,16 +48,25 @@ class SecurityGroupServerRpcApi(object):
     def security_group_rules_for_devices(self, context, devices):
         LOG.debug("Get security group rules "
                   "for devices via rpc %r", devices)
+        LOG.info("cfarquhar: requesting security group rules via RPC for these devices: {}".format(devices))
         cctxt = self.client.prepare(version='1.1')
         return cctxt.call(context, 'security_group_rules_for_devices',
                           devices=devices)
 
     def security_group_info_for_devices(self, context, devices):
+        import pprint
+
         LOG.debug("Get security group information for devices via rpc %r",
                   devices)
         cctxt = self.client.prepare(version='1.2')
-        return cctxt.call(context, 'security_group_info_for_devices',
-                          devices=devices)
+        # LOG.info("cfarquhar: SecurityGroupServerRpcApi - vars(cctxt): {}".format(vars(cctxt)))
+        # LOG.info("cfarquhar: SecurityGroupServerRpcApi - vars(cctxt._original_context): {}".format(vars(cctxt._original_context)))
+        # LOG.info("cfarquhar: SecurityGroupServerRpcApi - dir(cctxt): {}".format(dir(cctxt)))
+        LOG.info("cfarquhar: requesting security group info via RPC for these devices: {}".format(devices))
+        retval = cctxt.call(context, 'security_group_info_for_devices', devices=devices)
+        LOG.info("cfarquhar: received the following security group info via RPC: \n{}".format(pprint.pformat(retval)))
+        #LOG.info("cfarquhar: received the following sg_member_ips via RPC:\n{}".format(pprint.pformat(retval['sg_member_ips'])))
+        return retval
 
 
 class SecurityGroupServerRpcCallback(object):
@@ -99,6 +108,7 @@ class SecurityGroupServerRpcCallback(object):
         """
         devices_info = kwargs.get('devices')
         ports = self._get_devices_info(context, devices_info)
+        LOG.info("cfarquhar: in SecurityGroupServerRpcCallback.security_group_rules_for_devices - NOT EXPECTED")
         return self.plugin.security_group_rules_for_ports(context, ports)
 
     def security_group_info_for_devices(self, context, **kwargs):
@@ -116,7 +126,9 @@ class SecurityGroupServerRpcCallback(object):
         """
         devices_info = kwargs.get('devices')
         ports = self._get_devices_info(context, devices_info)
-        return self.plugin.security_group_info_for_ports(context, ports)
+        secgroup_info = self.plugin.security_group_info_for_ports(context, ports)
+        LOG.info("cfarquhar: in SecurityGroupServerRpcCallback.security_group_info_for_devices - NOT EXPECTED")
+        return secgroup_info
 
 
 class SecurityGroupAgentRpcApiMixin(object):
@@ -134,9 +146,11 @@ class SecurityGroupAgentRpcApiMixin(object):
     SG_RPC_VERSION = "1.1"
 
     def _get_security_group_topic(self):
-        return topics.get_topic_name(self.topic,
+        name = topics.get_topic_name(self.topic,
                                      topics.SECURITY_GROUP,
                                      topics.UPDATE)
+        LOG.info("cfarquhar: _get_security_group_topic topic name: {}".format(name))
+        return name
 
     def security_groups_rule_updated(self, context, security_groups):
         """Notify rule updated security groups."""
@@ -145,6 +159,7 @@ class SecurityGroupAgentRpcApiMixin(object):
         cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
+        LOG.info("cfarquhar: in SecurityGroupAgentRpcApiMixin.security_groups_rule_updated - NOT EXPECTED")
         cctxt.cast(context, 'security_groups_rule_updated',
                    security_groups=security_groups)
 
@@ -155,6 +170,7 @@ class SecurityGroupAgentRpcApiMixin(object):
         cctxt = self.client.prepare(version=self.SG_RPC_VERSION,
                                     topic=self._get_security_group_topic(),
                                     fanout=True)
+        LOG.info("cfarquhar: in SecurityGroupAgentRpcApiMixin.security_groups_member_updated - NOT EXPECTED")
         cctxt.cast(context, 'security_groups_member_updated',
                    security_groups=security_groups)
 
@@ -186,6 +202,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
                   security_groups)
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
+        LOG.info("cfarquhar: in SecurityGroupAgentRpcCallbackMixin.security_groups_rule_updated we received an RPC message to update secgroups {}".format(security_groups))
         self.sg_agent.security_groups_rule_updated(security_groups)
 
     def security_groups_member_updated(self, context, **kwargs):
@@ -196,10 +213,7 @@ class SecurityGroupAgentRpcCallbackMixin(object):
         security_groups = kwargs.get('security_groups', [])
         LOG.debug("Security group member updated on remote: %s",
                   security_groups)
-        LOG.info("cfarquhar: in rpc handler security_groups_member_updated.  This means we received an RPC to update security group membership")
-        # LOG.info("cfarquhar: context: {}".format(context))
-        # LOG.info("cfarquhar: vars(context): {}".format(vars(context)))
-        # LOG.info("cfarquhar: kwargs: {}".format(kwargs))
+        LOG.info("cfarquhar: in SecurityGroupAgentRpcCallbackMixin.security_groups_member_updated we received an RPC message to update secgroups {}".format(security_groups))
         if not self.sg_agent:
             return self._security_groups_agent_not_set()
         self.sg_agent.security_groups_member_updated(security_groups)
@@ -219,6 +233,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         registry.subscribe(self._add_child_sg_rules, 'SecurityGroup',
                            events.AFTER_UPDATE)
         # set this attr so agent can adjust the timeout of the client
+        LOG.info("cfarquhar: in SecurityGroupServerAPIShim - NOT EXPECTED")
         self.client = resources_rpc.ResourcesPullRpcApi().client
 
     def register_legacy_sg_notification_callbacks(self, sg_agent):

@@ -56,6 +56,7 @@ class SecurityGroupAgentRpc(object):
         self.context = context
         self.plugin_rpc = plugin_rpc
         self.init_firewall(defer_refresh_firewall, integration_bridge)
+        #LOG.info("cfarquhar: SecurityGroupAgentRpc.__init__ context: {}".format(vars(self.context)))
 
     def _get_trusted_devices(self, device_ids, devices):
         trusted_devices = []
@@ -166,13 +167,13 @@ class SecurityGroupAgentRpc(object):
                                     security_group_member_ips):
         LOG.debug("Update security group information")
         LOG.info("cfarquhar: entered _update_security_group_info")
-        LOG.info("cfarquhar: calling firewall.update_security_group_rules for the following (sg, rules):")
+        LOG.info("cfarquhar: (usgr) calling firewall.update_security_group_rules for the following (sg, rules):")
         for sg_id, sg_rules in security_groups.items():
-            LOG.info("cfarquhar: {} {}".format(sg_id, sg_rules))
+            LOG.info("cfarquhar: (usgr) {} {}".format(sg_id, sg_rules))
             self.firewall.update_security_group_rules(sg_id, sg_rules)
-        LOG.info("cfarquhar: calling firewall.update_security_group_members for the following (remote_sg, member_ips):")
+        LOG.info("cfarquhar: (usgm) calling firewall.update_security_group_members for the following (remote_sg, member_ips):")
         for remote_sg_id, member_ips in security_group_member_ips.items():
-            LOG.info("cfarquhar: {} {}".format(remote_sg_id, member_ips))
+            LOG.info("cfarquhar: (usgm) {} {}".format(remote_sg_id, member_ips))
             self.firewall.update_security_group_members(
                 remote_sg_id, member_ips)
 
@@ -205,7 +206,7 @@ class SecurityGroupAgentRpc(object):
         sec_grp_set = set(security_groups)
         for device in self.firewall.ports.values():
             if sec_grp_set & set(device.get(attribute, [])):
-                LOG.info("cfarquhar: appending device {}".format(device))
+                # LOG.info("cfarquhar: appending device {}".format(device))
                 devices.append(device['device'])
         if devices:
             if self.use_enhanced_rpc:
