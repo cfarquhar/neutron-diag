@@ -145,6 +145,7 @@ class IpsetManager(object):
         for ip in member_ips:
             process_input.append("add %s %s" % (new_set_name, ip))
 
+        LOG.info("cfarquhar: entered _refresh_set.  process_input = {}".format(process_input))
         self._restore_sets(process_input)
         self._swap_sets(new_set_name, set_name)
         self._destroy(new_set_name, True)

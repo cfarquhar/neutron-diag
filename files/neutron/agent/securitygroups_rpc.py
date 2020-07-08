@@ -133,40 +133,47 @@ class SecurityGroupAgentRpc(object):
 
     def _apply_port_filter(self, device_ids, update_filter=False):
         step = common_constants.AGENT_RES_PROCESSING_STEP
+        LOG.info("entered _apply_port_filter with the following device_ids: {}".format(device_ids))
         if self.use_enhanced_rpc:
             devices = {}
             security_groups = {}
             security_group_member_ips = {}
             for i in range(0, len(device_ids), step):
+                LOG.info("cfarquhar: in _apply_port_filter, calling security_group_info_for_devices for {}".format(list(device_ids)[i:i + step]))
                 devices_info = self.plugin_rpc.security_group_info_for_devices(
                     self.context, list(device_ids)[i:i + step])
                 devices.update(devices_info['devices'])
                 security_groups.update(devices_info['security_groups'])
                 security_group_member_ips.update(devices_info['sg_member_ips'])
         else:
+            LOG.info("cfarquhar: in _apply_port_filter, not using enhanced_rpc - NOT EXPECTED")
             devices = self.plugin_rpc.security_group_rules_for_devices(
                 self.context, list(device_ids))
         trusted_devices = self._get_trusted_devices(device_ids, devices)
+        
 
         with self.firewall.defer_apply():
+            LOG.info("cfarquhar: entered _apply_port_filter's 'with self.firewall.defer_apply()'")
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
                           devices.keys())
+                LOG.debug("cfarquhar: in _apply_port_filter, calling _update_security_group_info for (secgroup, secgroup_member_ips) {} {}".format(security_groups, security_group_member_ips))
                 self._update_security_group_info(
                     security_groups, security_group_member_ips)
             for device in devices.values():
                 if update_filter:
-                    LOG.debug("Update port filter for %s", device['device'])
+                    LOG.info("cfarquhar: in _apply_port_filter, Update port filter for %s", device['device'])
                     self.firewall.update_port_filter(device)
                 else:
-                    LOG.debug("Prepare port filter for %s", device['device'])
+                    LOG.info("cfarquhar: in _apply_port_filter, Prepare port filter for %s", device['device'])
                     self.firewall.prepare_port_filter(device)
+            LOG.info("cfarquhar: in _apply_port_filter, calling process_trusted_ports with trusted_devices = {}".format(trusted_devices))
             self.firewall.process_trusted_ports(trusted_devices)
 
     def _update_security_group_info(self, security_groups,
                                     security_group_member_ips):
         LOG.debug("Update security group information")
-        LOG.info("cfarquhar: entered _update_security_group_info")
+        LOG.info("cfarquhar: entered _update_security_group_info with security_groups = {}, security_group_member_ips = {}".format(security_groups, security_group_member_ips))
         LOG.info("cfarquhar: (usgr) calling firewall.update_security_group_rules for the following (sg, rules):")
         for sg_id, sg_rules in security_groups.items():
             LOG.info("cfarquhar: (usgr) {} {}".format(sg_id, sg_rules))
@@ -188,7 +195,7 @@ class SecurityGroupAgentRpc(object):
     def security_groups_member_updated(self, security_groups):
         LOG.info("Security group "
                  "member updated %r", security_groups)
-        LOG.info("cfarquhar: entered security_groups_member_updated.:")
+        LOG.info("cfarquhar: entered security_groups_member_updated.")
         # LOG.info("cfarquhar: in security_groups_member_updated.  Stack trace:")
         # import traceback
         # stack_layer = 0
@@ -201,16 +208,22 @@ class SecurityGroupAgentRpc(object):
             'sg_member')
 
     def _security_group_updated(self, security_groups, attribute, action_type):
-        LOG.info("cfarquhar: entered _security_group_updated.")
+        LOG.info("cfarquhar: entered _security_group_updated with security_groups = {}, attribute = {}, action_type = {}".format(security_groups, attribute, action_type))
         devices = []
         sec_grp_set = set(security_groups)
         for device in self.firewall.ports.values():
+            LOG.info("cfarquhar: (_security_group_updated) looking for intersection of src_grp_set {} and {}'s {}: {}".format(sec_grp_set, device['device'], attribute, set(device.get(attribute, []))))
             if sec_grp_set & set(device.get(attribute, [])):
                 # LOG.info("cfarquhar: appending device {}".format(device))
                 devices.append(device['device'])
+                LOG.info("cfarquhar: (_security_group_updated) found intersection {}, appending device {}".format(sec_grp_set & set(device.get(attribute, [])), device['device']))
+            else:
+                LOG.info("cfarquhar: (_security_group_updated) no intersection found.  not appending device {}".format(device['device']))
         if devices:
+            LOG.info("cfarquhar: (_security_group_updated) entered devices branch with {}".format(devices))
             if self.use_enhanced_rpc:
                 LOG.info("cfarquhar: use_enhanced_rpc = true")
+                LOG.info("cfarquhar: (_security_group_updated) calling firewall.security_group_updated with action_type {} and sec_grp_set {}".format(action_type, sec_grp_set))
                 self.firewall.security_group_updated(action_type, sec_grp_set)
             else:
                 LOG.info("cfarquhar: use_enhanced_rpc = false")
@@ -219,10 +232,14 @@ class SecurityGroupAgentRpc(object):
                           "for which firewall needs to be refreshed",
                           devices)
                 LOG.info("cfarquhar: defer_refresh_firewall = true")
+                LOG.info("cfarquhar: (_security_group_updated) devices to refilter BEFORE: {}".format(self.devices_to_refilter))
                 self.devices_to_refilter |= set(devices)
+                LOG.info("cfarquhar: (_security_group_updated) devices to refilter AFTER: {}".format(self.devices_to_refilter))
             else:
                 LOG.info("cfarquhar: defer_refresh_firewall = false")
                 self.refresh_firewall(devices)
+        else:
+            LOG.info("cfarquhar: (_security_group_updated) device list was empty")
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:
