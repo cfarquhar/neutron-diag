@@ -19,6 +19,6 @@ patched_files:
   - name: neutron/plugins/ml2/drivers/agent/_common_agent.py
     orig_sha1sum: c4397a7aa84a5115d59f45edbba3aea6d5a69c01
     patch_sha1sum: aa2694159fc99bf791233e07fa664d8bd6a02685
-  - name: files/neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py
+  - name: neutron/plugins/ml2/drivers/linuxbridge/agent/linuxbridge_neutron_agent.py
     orig_sha1sum: f38f82a55d2794e019f3a68c9f1a5455eace9bd7
     patch_sha1sum: b0f3725d245cdfd68b58c6060408c39f5202e71c
