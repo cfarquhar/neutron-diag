@@ -157,7 +157,7 @@ class SecurityGroupAgentRpc(object):
             if self.use_enhanced_rpc:
                 LOG.debug("Update security group information for ports %s",
                           devices.keys())
-                LOG.debug("cfarquhar: in _apply_port_filter, calling _update_security_group_info for (secgroup, secgroup_member_ips) {} {}".format(security_groups, security_group_member_ips))
+                LOG.info("cfarquhar: in _apply_port_filter, calling _update_security_group_info for (secgroup, secgroup_member_ips) {} {}".format(security_groups, security_group_member_ips))
                 self._update_security_group_info(
                     security_groups, security_group_member_ips)
             for device in devices.values():
@@ -211,14 +211,19 @@ class SecurityGroupAgentRpc(object):
         LOG.info("cfarquhar: entered _security_group_updated with security_groups = {}, attribute = {}, action_type = {}".format(security_groups, attribute, action_type))
         devices = []
         sec_grp_set = set(security_groups)
+        matched_sec_group_set = set()
+        matched_firewall_devices = []
+        unmatched_firewall_devices = []
         for device in self.firewall.ports.values():
-            LOG.info("cfarquhar: (_security_group_updated) looking for intersection of src_grp_set {} and {}'s {}: {}".format(sec_grp_set, device['device'], attribute, set(device.get(attribute, []))))
+            # LOG.info("cfarquhar: (_security_group_updated) looking for intersection of src_grp_set {} and {}'s {}: {}".format(sec_grp_set, device['device'], attribute, set(device.get(attribute, []))))
             if sec_grp_set & set(device.get(attribute, [])):
-                # LOG.info("cfarquhar: appending device {}".format(device))
                 devices.append(device['device'])
-                LOG.info("cfarquhar: (_security_group_updated) found intersection {}, appending device {}".format(sec_grp_set & set(device.get(attribute, [])), device['device']))
+                LOG.info("cfarquhar: (_security_group_updated) found that {} references {} in {}".format(device['device'], sec_grp_set & set(device.get(attribute, [])), attribute))
+                matched_sec_group_set.update(sec_grp_set & set(device.get(attribute, [])))
+                matched_firewall_devices.append(device['device'])
             else:
-                LOG.info("cfarquhar: (_security_group_updated) no intersection found.  not appending device {}".format(device['device']))
+                unmatched_firewall_devices.append(device['device'])
+                # LOG.info("cfarquhar: (_security_group_updated) no intersection found.  not appending device {}".format(device['device']))
         if devices:
             LOG.info("cfarquhar: (_security_group_updated) entered devices branch with {}".format(devices))
             if self.use_enhanced_rpc:
@@ -228,7 +233,7 @@ class SecurityGroupAgentRpc(object):
             else:
                 LOG.info("cfarquhar: use_enhanced_rpc = false")
             if self.defer_refresh_firewall:
-                LOG.debug("Adding %s devices to the list of devices "
+                LOG.info("cfarquhar: (_security_group_updated) Adding %s devices to the list of devices "
                           "for which firewall needs to be refreshed",
                           devices)
                 LOG.info("cfarquhar: defer_refresh_firewall = true")
@@ -240,6 +245,10 @@ class SecurityGroupAgentRpc(object):
                 self.refresh_firewall(devices)
         else:
             LOG.info("cfarquhar: (_security_group_updated) device list was empty")
+        LOG.info("cfarquhar: (_security_group_updated) leaving with the following matched taps: {}".format(matched_firewall_devices))
+        LOG.info("cfarquhar: (_security_group_updated) leaving with the following UNmatched taps: {}".format(unmatched_firewall_devices))
+        LOG.info("cfarquhar: (_security_group_updated) leaving with the following unmatched security groups: {}".format(sec_grp_set - matched_sec_group_set))
+
 
     def remove_devices_filter(self, device_ids):
         if not device_ids:

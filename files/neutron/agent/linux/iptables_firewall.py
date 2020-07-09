@@ -180,6 +180,12 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     devices, ip_version, ips)
 
     def _set_ports(self, port):
+        port_already_set = False
+        for existingport in self.ports.values():
+            if port['device'] == existingport['device']:
+                port_already_set = True
+        if not port_already_set:
+            LOG.info("cfarquhar: (_set_ports): adding {} to IptablesFirewallDriver.ports.  If this does not happen before _security_group_updated is called we have a problem.".format(port['device']))
         if not firewall.port_sec_enabled(port):
             self.unfiltered_ports[port['device']] = port
             self.filtered_ports.pop(port['device'], None)
